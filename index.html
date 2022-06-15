@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>图片压缩</title>
+  </head>
+  <style>
+    .compress-container{
+      text-align: center;
+    }
+    .compress-img{
+      width: 160px;
+      height: 160px;
+      line-height: 160px;
+      border: 1px dashed #d9d9d9;
+      border-radius: 6px;
+      position: relative;
+      margin: 20px auto;
+      position: relative;
+    }
+    .compress-img input{
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      bottom: 0px;
+      right: 0px;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .compress-img img{
+      max-width: 100%;
+      max-height: 100%;
+      vertical-align: middle;
+    }
+    #imgName{
+      margin-bottom: 10px;
+    }
+    .compress-btn{
+      margin-top: 20px;
+    }
+    .compress-btn input{
+      width: 110px;
+    }
+    .btn-item{
+      display: inline-block;
+      width: 75px;
+      height: 30px;
+      line-height: 30px;
+      font-size: 12px;
+      text-align: center;
+      color: #FFFFFF;
+      background: #1B61CF;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .btn-item:hover{
+      opacity: 0.9;
+    }
+    .list-item{
+      width: 400px;
+      margin: 20px auto;
+      padding: 20px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.15);
+      display: flex;
+    }
+    .list-item .list-img{
+      flex: none;
+      width: 100px;
+      height: 100px;
+      margin-right: 20px;
+    }
+    .list-item .list-img img{
+      max-width: 100%;
+      max-height: 100%;
+      vertical-align: middle;
+    }
+    .list-item .list-tips{
+      flex: 1;
+      overflow: hidden;
+      text-align: left;
+    }
+  </style>
+  <script src="./index.js"></script>
+  <body>
+    <div class="compress-container">
+      <div class="compress-img">
+        <img src="" id="img">
+        <input type="file" accept="image/*">
+      </div>
+      <div>
+        <div id="imgName"></div>
+        <div id="imgSize"></div>
+      </div>
+      <div class="compress-btn">
+        <span>图片宽度：</span>
+        <input type="number" placeholder="图片宽度" id="widthNode">
+        <span>图片高度：</span>
+        <input type="number" placeholder="图片高度" id="heightNode">
+        <span>图片质量：</span>
+        <input type="text" placeholder="图片质量 1 ~ 0" id="qualityNode" oninput="qualityInput()"> 
+        <br>
+        <br>
+        <span class="btn-item" onclick="qualityClick()">压缩图片</span>
+        <span class="btn-item" onclick="empty()">清空</span>
+      </div>
+      <div id="fileList">
+      </div>
+    </div>
+  </body>
+  <script>
+    let file = null // 文件对象
+    let imgInput = document.querySelector(".compress-img input")
+    imgInput.addEventListener('change', function(e) {
+      if (e.target.files && e.target.files.length > 0) {
+        file = e.target.files[0]
+        img.src = window.URL.createObjectURL(file);
+        imgName.innerHTML = file.name
+        imgSize.innerHTML = sizeInit(file.size) 
+      }
+    })
+
+    // 图片压缩
+    function qualityClick () {
+      if (!file) {
+        return 
+      }
+      if ((qualityNode.value < 1 && qualityNode.value !== "") || widthNode.value > 0 || heightNode.value > 0) {
+        compressImg({
+          fileObj: file, // 图片对象
+          width: widthNode.value, // 图片宽度
+          height: heightNode.value, // 图片高度
+          quality: qualityNode.value, // 图片质量
+          callback: function (val) {
+            if (val) {
+              // 裁剪成功
+              let newfile = new window.File([val], file.name, { type: file.type })
+              fileList.innerHTML =  `
+                <div class="list-item">
+                  <div class="list-img">
+                    <img src="${window.URL.createObjectURL(newfile)}">
+                  </div>
+                  <div class="list-tips">
+                    <div>图片名称：${newfile.name}</div>
+                    <div>图片大小：${sizeInit(newfile.size) }</div>
+                  </div>
+                </div>` + fileList.innerHTML
+            } else {
+              // 裁剪失败
+              alert("裁剪失败！")
+            }
+          }
+        })
+      } else {
+        fileList.innerHTML =  `
+          <div class="list-item">
+            <div class="list-img">
+              <img src="${window.URL.createObjectURL(file)}">
+            </div>
+            <div class="list-tips">
+              <div>图片名称：${file.name}</div>
+              <div>图片大小：${sizeInit(file.size) }</div>
+            </div>
+          </div>` + fileList.innerHTML
+      }
+    }
+
+    // 清除图片列表
+    function empty(e) {
+      fileList.innerHTML = ""
+    }
+
+
+    // 图片大小单位转换
+    function sizeInit (res) {
+      if (res) {
+        let size = res / 1024
+        if (size > 1024) {
+          size = size / 1024
+          size = parseFloat(size.toFixed(2))  + ' MB'
+        } else {
+          size = parseFloat(size.toFixed(1))  + ' KB'
+        }
+        return size
+      } else {
+        return ""
+      }
+    }
+
+    // 输入框校验
+    function qualityInput () {
+      if (!qualityNode.value.match(/^[0-9]\d*\.\d*$/)) {
+        let moneyFloat = parseFloat(qualityNode.value)
+        if (moneyFloat < 0){
+          moneyFloat = 0
+        } else if (isNaN(moneyFloat)) {
+          moneyFloat = ""
+        }
+        qualityNode.value = moneyFloat
+      }
+    }
+  </script>
+</html>
