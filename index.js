@@ -1,8 +1,12 @@
 function compressImg (res = {}) {
   try {
+    let type = 'image/png'
     const image = new Image()
     if (typeof(res.fileObj) === "object") {
       image.src = window.URL.createObjectURL(res.fileObj)
+      if (res.fileObj.type) {
+        type = res.fileObj.type
+      }
     } else {
       image.src = res.fileObj
     }
@@ -35,7 +39,8 @@ function compressImg (res = {}) {
       canvas.setAttributeNode(anw)
       canvas.setAttributeNode(anh)
       ctx.drawImage(this, 0, 0, w, h)
-      const data = canvas.toDataURL('image/jpeg', parseFloat(res.quality)) // 设置图片质量
+
+      const data = canvas.toDataURL(type, parseFloat(res.quality)) // 设置图片质量
       // 压缩完成执行回调
       const newFile = convertBase64UrlToBlob(data)
       res.callback(newFile)
